@@ -3,23 +3,24 @@ using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private GameObject _prefab;
-    [SerializeField] private float _repeatRate = 1f;
-    [SerializeField] private int _defaultCapacity = 5;
-    [SerializeField] private int _maxCapacity = 5;    
+    [SerializeField] private GameObject _cube;
+    [SerializeField] private float _repeatRate;
+    [SerializeField] private int _defaultCapacity;
+    [SerializeField] private int _maxCapacity;
+    [SerializeField] private Material _material;
 
-    private float _minPositionX = -14.5f;
-    private float _maxPositionX = 14.5f;
-    private float _minPositionZ = -14.5f;
-    private float _maxPositionZ = 14.5f;
-    private float _positionY = 10;
+    private float _minPositionX = -11f;
+    private float _maxPositionX = 11f;
+    private float _minPositionZ = -11f;
+    private float _maxPositionZ = 5f;
+    private float _positionY = 7;
 
-    private ObjectPool <GameObject> _pool;
+    private ObjectPool <GameObject> _cubesPool;
 
     private void Awake()
     {
-        _pool = new ObjectPool<GameObject>(
-         createFunc: () => Instantiate(_prefab),
+        _cubesPool = new ObjectPool<GameObject>(
+         createFunc: () => Instantiate(_cube),
          actionOnGet: (obj) => ActionOnGet(obj),
          actionOnRelease: (obj) => obj.SetActive(false),
          actionOnDestroy: (obj) => Destroy(obj),
@@ -35,22 +36,25 @@ public class Spawner : MonoBehaviour
 
     public void Release(GameObject obj)
     { 
-        _pool.Release(obj);
+        _cubesPool.Release(obj);
     }
 
     private void ActionOnGet(GameObject obj)
     {
         float positionX = Random.Range(_minPositionX, _maxPositionX);
-        float positionZ = Random.Range(_minPositionZ, _maxPositionZ);
-        Vector3 position = new Vector3(positionX, _positionY, positionZ);
-
-        obj.transform.position = position;
+        float positionZ = Random.Range(_minPositionZ, _maxPositionZ);       
+        
+        obj.transform.rotation = Quaternion.Euler(Vector3.zero); 
+        obj.transform.position = new Vector3(positionX, _positionY, positionZ); ;        
+        
         obj.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        obj.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+        obj.GetComponent<MeshRenderer>().material = _material;        
         obj.SetActive(true);
     }
 
     private void GetCube()
     {
-        _pool.Get();
+        _cubesPool.Get();
     }    
 }
