@@ -1,28 +1,30 @@
+using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Pool;
 
-public class CubeLogic : MonoBehaviour
+public class Cube : MonoBehaviour
 {
-    [SerializeField] public GameObject _prefab;
-    [SerializeField] private Material[] _materials = new Material[2];
+    [SerializeField] private Material _finishMaterial;
 
-    private ObjectPool <CubeLogic> _pool;
+    public Action <Cube> LifeEnded;
     
     private Rigidbody _rigidbody;
 
-    private MeshRenderer _meshRenderer;  
-    
-    public void Init(Vector3 position, ObjectPool<CubeLogic> pool)
-    { 
-        _pool = pool;
+    private MeshRenderer _meshRenderer;
+
+    private void Awake()
+    {
         _meshRenderer = GetComponent<MeshRenderer>();
         _rigidbody = GetComponent<Rigidbody>();
+    }
+
+    public void Init(Vector3 position, Material material)
+    {        
         transform.position = position;
         transform.rotation = Quaternion.identity;        
         _rigidbody.velocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;       
-        _meshRenderer.material = _materials[0];
+        _meshRenderer.material = material;
         gameObject.SetActive(true);
     }
 
@@ -30,22 +32,17 @@ public class CubeLogic : MonoBehaviour
     {
         if (collision.gameObject.GetComponent<Trigger>() != null)
         {
-            if (_meshRenderer.material != _materials[1])
+            if (_meshRenderer.material != _finishMaterial)
             {
-                _meshRenderer.material = _materials[1];
-                StartCoroutine(LifeCount(this, _pool));
+                _meshRenderer.material = _finishMaterial;
+                StartCoroutine(LifeCount());
             }
         }
     }
 
-    private IEnumerator LifeCount(CubeLogic cube, ObjectPool <CubeLogic> pool)
+    private IEnumerator LifeCount()
     {         
-        yield return new WaitForSeconds(Random.Range(2, 6));
-        Release();        
-    }
-
-    private void Release()
-    {
-        _pool.Release(this);
-    }
+        yield return new WaitForSeconds(UnityEngine.Random.Range(2, 6));
+        LifeEnded?.Invoke(this);        
+    }    
 }

@@ -4,10 +4,11 @@ using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private CubeLogic _cube;
-    [SerializeField] private float _repeatRate;    
+    [SerializeField] private Cube _cube;
+    [SerializeField] private float _repeatRate;
+    [SerializeField] private Material _startMaterial;
 
-    private ObjectPool <CubeLogic> _cubesPool;
+    private ObjectPool <Cube> _cubesPool;
 
     private Vector3 position;
 
@@ -19,21 +20,21 @@ public class Spawner : MonoBehaviour
 
     private void Awake()
     {
-        _cubesPool = new ObjectPool<CubeLogic>(CreateCube, null, OnPutBackInPool, defaultCapacity: 20);
+        _cubesPool = new ObjectPool<Cube>(CreateCube, null, OnPutBackInPool, defaultCapacity: 20);
     }
 
-    void Start()
+    private void Start()
     {
         StartCoroutine(SpawnCubes(_repeatRate));
     }
 
-    private CubeLogic CreateCube()
+    private Cube CreateCube()
     {
         var cube = Instantiate (_cube);
         return cube;
     }
 
-    private void OnPutBackInPool(CubeLogic cube)
+    private void OnPutBackInPool(Cube cube)
     {
         cube.gameObject.SetActive(false);
     }
@@ -57,7 +58,13 @@ public class Spawner : MonoBehaviour
         position = new Vector3(positionX, _positionY, positionZ);
 
         var cube = _cubesPool.Get();
-
-        cube.Init(position, _cubesPool);
+        cube.LifeEnded += OnLifeEnded;
+        cube.Init(position, _startMaterial);
+    } 
+    
+    private void OnLifeEnded(Cube cube)
+    {
+        _cubesPool.Release(cube);
+        cube.LifeEnded -= OnLifeEnded;
     }    
 }
